@@ -170,7 +170,7 @@ class AsyncAccumuloConnector(AccumuloConnectorBase):
             AccumuloProxyClientFunctionGetters.get_user_authorizations, user)
         return AuthorizationSet(auths)
 
-    async def create_table(self, table: str, version_iter: str = None, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
+    async def create_table(self, table: str, version_iter: bool = True, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
         await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.create_table, self.login,
                                                       table, version_iter, time_type)
 

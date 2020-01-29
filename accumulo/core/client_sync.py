@@ -51,7 +51,7 @@ class AccumuloConnector(AccumuloConnectorBase):
     def get_user_authorizations(self, user: str) -> Types.T_AUTHORIZATION_SET:
         return AuthorizationSet(self.proxy_client.getUserAuthorizations(self.login, user))
 
-    def create_table(self, table: str, version_iter: str = None, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
+    def create_table(self, table: str, version_iter: bool = True, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
         self.proxy_client.createTable(self.login, table, version_iter, time_type)
 
     def table_exists(self, table: str) -> bool:

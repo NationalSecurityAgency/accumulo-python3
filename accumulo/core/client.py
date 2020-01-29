@@ -29,7 +29,7 @@ class AccumuloConnectorBase:
     def get_user_authorizations(self, user: str) -> Types.T_AUTHORIZATION_SET:
         raise NotImplementedError
 
-    def create_table(self, table: str, version_iter: str = None, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
+    def create_table(self, table: str, version_iter: bool = True, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
         raise NotImplementedError
 
     def table_exists(self, table: str) -> bool:
