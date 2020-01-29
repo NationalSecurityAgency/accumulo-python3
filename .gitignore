@@ -1,0 +1,9 @@
+venv
+*.pyc
+__pycache__
+.idea
+
+draft_*.py
+
+*.egg-info
+dist

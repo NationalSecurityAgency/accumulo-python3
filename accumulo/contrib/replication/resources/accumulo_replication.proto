@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Mutation {
+    bytes row  = 1;
+    bytes cf = 2;
+    bytes cq = 3;
+    bytes visibility = 4;
+    int64 timestamp = 5;
+    bytes value = 6;
+    bool delete = 7;
+}
+
+message MutationBatch {
+    string table = 1;
+    repeated Mutation mutations = 2;
+}
