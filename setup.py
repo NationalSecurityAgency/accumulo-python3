@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='accumulo',
-    version='0.2.0',
+    version='0.3.0',
     packages=find_packages(),
     url='https://github.com/NationalSecurityAgency/accumulo-python3',
     author='National Security Agency',
