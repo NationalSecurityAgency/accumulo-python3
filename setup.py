@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name='accumulo',
     version='0.3.0',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     url='https://github.com/NationalSecurityAgency/accumulo-python3',
     author='National Security Agency',
     author_email='/dev/null',
