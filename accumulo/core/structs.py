@@ -184,17 +184,20 @@ class RangePrefix(Range):
         if cq is not None:
             return Range(
                 start_key=Key(row, cf, cq),
-                end_key=Key(row, cf, encode(cq) + b'\xff')
+                end_key=Key(row, cf, encode(cq) + b'\xff'),
+                is_end_key_inclusive=True
             )
         elif cf is not None:
             return Range(
                 start_key=Key(row, cf),
-                end_key=Key(row, encode(cf) + b'\xff')
+                end_key=Key(row, encode(cf) + b'\xff'),
+                is_end_key_inclusive=True
             )
         else:
             return Range(
                 start_key=Key(row),
-                end_key=Key(encode(row) + b'\xff')
+                end_key=Key(encode(row) + b'\xff'),
+                is_end_key_inclusive=True
             )
 
 
