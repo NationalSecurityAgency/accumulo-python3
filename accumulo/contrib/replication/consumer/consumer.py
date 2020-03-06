@@ -4,12 +4,13 @@ Worker utility that consumes encoded mutation batches from the AMQP queue and
 commits the mutations to Accumulo.
 """
 import logging
+from typing import Optional
 
 import pika
 
 from google.protobuf.message import DecodeError
 
-from accumulo import AccumuloConnector, Mutation
+from accumulo import AccumuloConnector, Mutation, WriterOptions
 from accumulo.contrib.replication import accumulo_replication_pb2
 from accumulo.thrift import ttypes
 
@@ -19,11 +20,15 @@ logger = logging.getLogger('accumulo.replication.consumer')
 
 class Consumer:
 
-    def __init__(self, amqp_url: str, queue: str, accumulo_connector: AccumuloConnector):
+    def __init__(self, amqp_url: str, queue: str, accumulo_connector: AccumuloConnector,
+                 writer_options: Optional[WriterOptions] = None):
         self._amqp_connection: pika.BlockingConnection = pika.BlockingConnection(pika.URLParameters(amqp_url))
         self._amqp_channel = self._amqp_connection.channel()
         self._queue = queue
         self._accumulo_connector = accumulo_connector
+        if writer_options is None:
+            writer_options = WriterOptions()
+        self._writer_options = writer_options
 
     def close(self):
         logger.info('Stopping')
@@ -59,7 +64,7 @@ class Consumer:
         ]
         err = False
         try:
-            with self._accumulo_connector.create_writer(table) as writer:
+            with self._accumulo_connector.create_writer(table, self._writer_options) as writer:
                 writer.add_mutations(mutations)
         except ttypes.TableNotFoundException:
             err = True
