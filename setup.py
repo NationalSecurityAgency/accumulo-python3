@@ -9,7 +9,7 @@ setup(
     author_email='/dev/null',
     description='Build Python 3 applications that integrate with Apache Accumulo',
     install_requires=[
-        'thrift>=0.13.0'
+        'thrift>=0.16.0' # Update to thrift 0.17.0, pending https://issues.apache.org/jira/projects/THRIFT/issues/THRIFT-5546
     ],
     extras_require={
         'replication': [
