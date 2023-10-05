@@ -133,8 +133,8 @@ class AsyncAccumuloConnectorPoolExecutor(BaseAsyncAccumuloConnectorPoolExecutor)
 
 class AsyncAccumuloConnector(AccumuloConnectorBase):
 
-    def __init__(self, proxy_connection_pool_executor: AsyncAccumuloConnectorPoolExecutor, login: bytes):
-        super().__init__(login)
+    def __init__(self, proxy_connection_pool_executor: AsyncAccumuloConnectorPoolExecutor, shared_secret: bytes):
+        super().__init__(shared_secret)
         self.proxy_connection_pool_executor = proxy_connection_pool_executor
 
     async def create_scanner(self, table: str, opts: Optional[ScanOptions] = None):
@@ -142,7 +142,7 @@ class AsyncAccumuloConnector(AccumuloConnectorBase):
             opts = ScanOptions()
         opts = TTypeFactory.scan_options(opts)
         resource_id = await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.create_scanner,
-                                                                    self.login, table, opts)
+                                                                    self.shared_secret, table, opts)
         return AsyncAccumuloScanner(self.proxy_connection_pool_executor, resource_id)
 
     async def create_batch_scanner(self, table: str, opts: Optional[BatchScanOptions] = None):
@@ -150,7 +150,7 @@ class AsyncAccumuloConnector(AccumuloConnectorBase):
             opts = BatchScanOptions()
         opts = TTypeFactory.batch_scan_options(opts)
         resource_id = await self.proxy_connection_pool_executor.run(
-            AccumuloProxyClientFunctionGetters.create_batch_scanner, self.login, table, opts)
+            AccumuloProxyClientFunctionGetters.create_batch_scanner, self.shared_secret, table, opts)
         return AsyncAccumuloScanner(self.proxy_connection_pool_executor, resource_id)
 
     async def create_writer(self, table: str, opts: Optional[WriterOptions] = None):
@@ -158,12 +158,12 @@ class AsyncAccumuloConnector(AccumuloConnectorBase):
             opts = WriterOptions()
         opts = TTypeFactory.writer_options(opts)
         resource_id = await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.create_writer,
-                                                                    self.login, table, opts)
+                                                                    self.shared_secret, table, opts)
         return AsyncAccumuloWriter(self.proxy_connection_pool_executor, resource_id)
 
     async def change_user_authorizations(self, user: str, auths: Types.T_AUTHORIZATION_SET):
         await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.change_user_authorizations,
-                                                      self.login, user, auths)
+                                                      self.shared_secret, user, auths)
 
     async def get_user_authorizations(self, user: str) -> Types.T_AUTHORIZATION_SET:
         auths = await self.proxy_connection_pool_executor.run(
@@ -171,12 +171,12 @@ class AsyncAccumuloConnector(AccumuloConnectorBase):
         return AuthorizationSet(auths)
 
     async def create_table(self, table: str, version_iter: bool = True, time_type: Types.T_TIME_TYPE = TimeType.MILLIS):
-        await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.create_table, self.login,
+        await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.create_table, self.shared_secret,
                                                       table, version_iter, time_type)
 
     async def table_exists(self, table: str) -> bool:
         return await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.table_exists,
-                                                             self.login, table)
+                                                             self.shared_secret, table)
 
 
 class AsyncAccumuloConnectorResource:
@@ -237,17 +237,11 @@ class AccumuloProxyConnectionPoolContextAsync(AccumuloContextBase):
             proxy_connection_pool_executor = AsyncAccumuloConnectorPoolExecutor()
         self.proxy_connection_pool_executor = proxy_connection_pool_executor
 
-    async def create_connector(self, user: str, password: str) -> AsyncAccumuloConnector:
-        login = await self.proxy_connection_pool_executor.run(AccumuloProxyClientFunctionGetters.login, user,
-                                                              {'password': password})
-        return AsyncAccumuloConnector(self.proxy_connection_pool_executor, login)
+    async def create_connector(self, shared_secret: bytes) -> AsyncAccumuloConnector:
+        return AsyncAccumuloConnector(self.proxy_connection_pool_executor, shared_secret)
 
 
 class AccumuloProxyClientFunctionGetters:
-
-    @staticmethod
-    def login(c: AccumuloProxy.Client):
-        return c.login
 
     @staticmethod
     def create_scanner(c: AccumuloProxy.Client):

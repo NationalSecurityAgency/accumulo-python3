@@ -5,14 +5,14 @@ from accumulo.core.structs import BatchScanOptions, Mutation, ScanOptions, TimeT
 
 class AccumuloContextBase:
 
-    def create_connector(self, user: str, auth: str):
+    def create_connector(self, shared_secret: bytes):
         raise NotImplementedError
 
 
 class AccumuloConnectorBase:
 
-    def __init__(self, login: bytes):
-        self.login = login
+    def __init__(self, shared_secret: bytes):
+        self.shared_secret = shared_secret
 
     def create_scanner(self, table: str, options: ScanOptions):
         raise NotImplementedError

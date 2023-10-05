@@ -12,7 +12,12 @@ Library features include:
 import accumulo
 from accumulo import Mutation, RangePrefix, ScanOptions
 
-connector = accumulo.AccumuloProxyConnectionContext().create_connector('user', 'secret')
+# The accumulo proxy now authenticates with accumulo by itself.
+# This client then authenticates with the proxy using a configured 'sharedSecret',
+#    shared between the client and proxy
+sharedSecret = "sharedSecret"
+
+connector = accumulo.AccumuloProxyConnectionContext().create_connector(sharedSecret)
 
 # Create the table 'tmp' if it does not already exist.
 if not connector.table_exists('tmp'):
@@ -32,7 +37,7 @@ with connector.create_scanner('tmp', ScanOptions(range=RangePrefix('User.1'))) a
         print(r.row, r.cf, r.value_bytes)
 ```
 
-__Note__. This library is a work in progress. It has been tested with Accumulo 1.9 and Python 3.8.
+__Note__. This library is a work in progress. It has been tested with Accumulo 2.1.1 and Python 3.8.
 
 ## Installation
 
@@ -51,6 +56,14 @@ development.
 
 ```
 pip install -e .
+```
+
+### Docker Image
+
+Alternatively, build a docker image
+
+```
+docker build . -t accumulo-proxy-client
 ```
 
 ## Background
@@ -98,8 +111,7 @@ higher-level functionality in this library. Use the `client` property of an `Acc
 access these bindings.
 
 ```python
-login = proxy_connection.client.login('user', {'password': 'secret'})
-proxy_connection.client.changeUserAuthorizations(login, 'user', [b'ADMIN'])
+proxy_connection.client.changeUserAuthorizations('sharedSecret', 'user', [b'ADMIN'])
 ```
 
 ### Creating a blocking connector
@@ -111,9 +123,9 @@ Use the `AccumuloProxyConnectionContext` class to create a blocking connector in
 
 ```python
 from accumulo import AccumuloProxyConnectionContext
-
+sharedSecret = "sharedSecret"
 context = AccumuloProxyConnectionContext(proxy_connection)
-connector = context.create_connector('user', 'secret')
+connector = context.create_connector(sharedSecret)
 ```
 
 ### Perform some basic table operations
@@ -243,7 +255,7 @@ with connector.create_scanner(
     'tmp',
     ScanOptions(
         # Binary and non-binary arguments are accepted
-        range=Range(start_key=Key('sk', b'cf'))
+        range=Range(start_key=Key('aStartKey', b'cf'))
     )
 ) as scanner:
     pass
@@ -251,7 +263,7 @@ with connector.create_scanner(
 with connector.create_scanner(
     'tmp',
     ScanOptions(
-        range=Range(end_key=Key('ek', b'cf'), is_end_key_inclusive=True)
+        range=Range(end_key=Key('endKey', b'cf'), is_end_key_inclusive=True)
     )
 ) as scanner:
     pass
@@ -259,7 +271,7 @@ with connector.create_scanner(
 with connector.create_scanner(
     'tmp',
     ScanOptions(
-        range=Range(start_key=Key('sk', b'cf'), end_key=Key('ek', 'cf', 'cq'))
+        range=Range(start_key=Key('aStartKey', b'cf'), end_key=Key('endKey', 'cf', 'cq'))
     )
 ) as scanner:
     pass
@@ -280,7 +292,7 @@ with connector.create_batch_scanner(
 
 ### Use an iterator
 
-`ScanOptions` and `BatchScanOptions` both support an `iterator_settings` keyword argument.
+`ScanOptions` and `BatchScanOptions` both support an `iterators` keyword argument.
 
 ```python
 from accumulo import IteratorSetting
@@ -288,7 +300,7 @@ from accumulo import IteratorSetting
 with connector.create_scanner(
     'tmp',
     ScanOptions(
-        iterator_settings=[
+        iterators=[
             IteratorSetting(priority=30, name='iter', iterator_class='my.iterator', properties={})
         ]
     )
@@ -311,7 +323,7 @@ connector, we will use the `AccumuloProxyConnectionPoolContextAsync` class.
 ```python
 from accumulo import AccumuloProxyConnectionPoolContextAsync
 
-async_conn = await AccumuloProxyConnectionPoolContextAsync().create_connector('user', 'secret')
+async_conn = await AccumuloProxyConnectionPoolContextAsync().create_connector('sharedSecret')
 ```
 
 Unlike the blocking connector, the non-blocking connector uses a pool of proxy connection objects, and uses a 
@@ -335,7 +347,7 @@ executor = AsyncAccumuloConnectorPoolExecutor(
 )
 # A default executor is created if one is not provided.
 context = AccumuloProxyConnectionPoolContextAsync(executor)
-async_conn = await AccumuloProxyConnectionPoolContextAsync().create_connector('user', 'secret')
+async_conn = await AccumuloProxyConnectionPoolContextAsync().create_connector('sharedSecret')
 ```
 
 #### Using writers
@@ -370,5 +382,5 @@ the binding function from a proxy client instance.
 
 ```python
 # executor.run(gettern_fn, *args)
-await executor.run(lambda c: c.tableExists, login, 'tmp')
+await executor.run(lambda c: c.tableExists, 'sharedSecret', 'tmp')
 ```
